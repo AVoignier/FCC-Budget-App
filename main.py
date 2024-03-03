@@ -36,31 +36,38 @@ class Category:
         return ret_str
 
 def create_spend_chart(categories):
-    spent_amounts = []
-    # Get total spent in each category
+    spends = []
+
     for category in categories:
-        spent = 0
-        for item in category.ledger:
-            if item["amount"] < 0:
-                spent += abs(item["amount"])
-        spent_amounts.append(round(spent, 2))
+        spends.append( -round(sum( [ val['amount'] for val in category.ledger if val['amount'] < 0 ] ),2) )
+    
+    total_spends = sum(spends)
+    
+    print(spends, total_spends)
 
-    # Calculate percentage rounded down to the nearest 10
-    total = round(sum(spent_amounts), 2)
-    spent_percentage = list(map(lambda amount: int((((amount / total) * 10) // 1) * 10), spent_amounts))
+    chart = "Percentage spent by category\n"
 
-    # Create the bar chart substrings
-    header = "Percentage spent by category\n"
-
-    chart = ""
-    for value in reversed(range(0, 101, 10)):
-        chart += str(value).rjust(3) + '|'
-        for percent in spent_percentage:
-            if percent >= value:
-                chart += " o "
+    for i in range(100,-1,-10):
+        chart += f"{str(i).rjust(3)}|"
+        for spend in spends:
+            if spend/total_spends*100 > i:
+                chart += ' o '
             else:
-                chart += "   "
-        chart += " \n"
+                chart += '   '
+        chart+=' \n'
+
+    chart += f"    {'---'*len(spends)}-\n"
+
+    for letter_index in range( max( map( lambda category : len(category.name), categories ) ) ):
+        chart += '    '
+        for category in categories:
+            if letter_index < len(category.name):
+                chart += f' {category.name[letter_index]} '
+            else:
+                chart += '   '
+        chart += ' \n' 
+
+    return chart.strip('\n')
 
 if __name__ == "__main__":
     food = Category("Food")
